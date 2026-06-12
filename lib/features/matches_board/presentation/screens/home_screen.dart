@@ -7,6 +7,7 @@ import '../../domain/entities/match_entity.dart';
 import '../../domain/repositories/matches_repository.dart';
 import '../widgets/date_selector_bar.dart';
 import '../widgets/match_card_widget.dart';
+import 'filter_screen.dart';
 import '../../../../core/theme/world_cup_colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,6 +21,9 @@ class _HomeScreenState extends State<HomeScreen> {
   late MatchesRepository _repository;
   late Future<List<MatchEntity>> _matchesFuture;
   DateTime _selectedDate = DateTime.now();
+
+  String _statusFilter = 'Todos';
+  String _stageFilter = 'Todos';
 
   final DateTime _worldCupStart = DateTime(2026, 6, 11);
   final DateTime _worldCupEnd = DateTime(2026, 7, 19);
@@ -55,9 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: WorldCupColors.primaryBlue,
+              primary: WorldCupColors.magenta,
               onPrimary: Colors.white,
-              onSurface: WorldCupColors.textDark,
+              onSurface: WorldCupColors.dark,
             ),
           ),
           child: child!,
@@ -76,17 +80,37 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: WorldCupColors.background,
+      backgroundColor: WorldCupColors.bg,
       appBar: AppBar(
-        title: const Text('FIFA World Cup 2026 ⚽', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: WorldCupColors.primaryBlue,
+        title: const Text('Mundial 2026 ⚽', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: WorldCupColors.blue,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.filter_list_rounded),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => FilterScreen(
+                    currentStatusFilter: _statusFilter,
+                    currentStageFilter: _stageFilter,
+                  ),
+                ),
+              );
+              if (result != null && result is Map<String, String>) {
+                setState(() {
+                  _statusFilter = result['status'] ?? 'Todos';
+                  _stageFilter = result['stage'] ?? 'Todos';
+                });
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.calendar_today_rounded),
             onPressed: () => _selectDate(context),
-          )
+          ),
         ],
       ),
       body: Column(
@@ -101,18 +125,47 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
             decoration: BoxDecoration(
-              color: WorldCupColors.cardBackground,
+              color: Colors.white,
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
               ],
             ),
             width: double.infinity,
-            child: Text(
-              'Partidos: ${DateFormat('EEEE, dd \'de\' MMMM', 'es').format(_selectedDate).toUpperCase()}',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: WorldCupColors.vibrantPurple, letterSpacing: 0.5),
-              textAlign: TextAlign.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  DateFormat('EEEE, dd \'de\' MMMM', 'es').format(_selectedDate).toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: WorldCupColors.magenta,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                if (_statusFilter != 'Todos' || _stageFilter != 'Todos')
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: WorldCupColors.magenta.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'FILTRADO',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: WorldCupColors.magenta,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           Expanded(
@@ -120,7 +173,11 @@ class _HomeScreenState extends State<HomeScreen> {
               future: _matchesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(WorldCupColors.vibrantPurple)));
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(WorldCupColors.magenta),
+                    ),
+                  );
                 }
 
                 if (snapshot.hasError) {
@@ -128,21 +185,56 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Center(
                       child: Text(
-                        'Error de Diagnóstico:\n${snapshot.error}',
+                        'Error al cargar partidos:\n${snapshot.error}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: WorldCupColors.vibrantRed, fontSize: 14, fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                          color: WorldCupColors.magenta,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   );
                 }
 
-                final matches = snapshot.data ?? [];
+                final allMatches = snapshot.data ?? [];
+
+                // Aplicar filtros locales de presentación
+                final matches = allMatches.where((match) {
+                  // Filtrar por estado
+                  if (_statusFilter == 'En Vivo' && !match.isLive) return false;
+                  if (_statusFilter == 'Finalizados') {
+                    final finished = match.status == 'FINISHED' || match.status == 'FT';
+                    if (!finished) return false;
+                  }
+                  if (_statusFilter == 'Programados') {
+                    final scheduled = match.status != 'FINISHED' && match.status != 'FT' && !match.isLive;
+                    if (!scheduled) return false;
+                  }
+
+                  // Filtrar por competición
+                  final stageLower = match.stage.toLowerCase();
+                  if (_stageFilter == 'Copa del Mundo FIFA') {
+                    final isWorldCup = stageLower.contains('world cup') || stageLower.contains('copa del mundo') || stageLower.contains('mundial');
+                    if (!isWorldCup) return false;
+                  }
+                  if (_stageFilter == 'Major League Soccer') {
+                    final isMLS = stageLower.contains('mls') || stageLower.contains('major league');
+                    if (!isMLS) return false;
+                  }
+
+                  return true;
+                }).toList();
 
                 if (matches.isEmpty) {
                   return const Center(
                     child: Text(
-                      'No hay partidos del Mundial en esta fecha',
-                      style: TextStyle(fontSize: 16, color: WorldCupColors.textMuted, fontWeight: FontWeight.w500),
+                      'No hay partidos para los filtros seleccionados',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: WorldCupColors.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   );
                 }

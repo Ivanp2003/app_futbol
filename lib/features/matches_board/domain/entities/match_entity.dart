@@ -12,6 +12,8 @@ class MatchEntity {
   final String stage;
   final String? group;
   final DateTime utcDateTime;
+  final bool isLive;
+  final int? minute;
 
   MatchEntity({
     required this.id,
@@ -26,5 +28,7 @@ class MatchEntity {
     required this.stage,
     this.group,
     required this.utcDateTime,
+    this.isLive = false,
+    this.minute,
   });
 }

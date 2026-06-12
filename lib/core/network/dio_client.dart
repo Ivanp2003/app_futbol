@@ -1,3 +1,4 @@
+// lib/core/network/dio_client.dart
 import 'package:dio/dio.dart';
 
 class DioClient {
@@ -6,11 +7,11 @@ class DioClient {
   DioClient()
       : _dio = Dio(
           BaseOptions(
-            baseUrl: 'https://v3.football.api-sports.io',
+            baseUrl: 'https://api.football-data.org/v4',
             connectTimeout: const Duration(seconds: 10),
             receiveTimeout: const Duration(seconds: 10),
             headers: {
-              'x-apisports-key': 'cd9d1924b5fe53d5d477f423cc4999ab',
+              'X-Auth-Token': '7bb9e5231a5e4366a120849e1e69e96a',
             },
           ),
         );

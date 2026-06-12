@@ -205,7 +205,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: WorldCupColors.cardBackground,
             width: double.infinity,
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))
+              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))
             ],
             child: Text(
               'Partidos: ${DateFormat('EEEE, dd \'de\' MMMM', 'es').format(_selectedDate).toUpperCase()}',
@@ -276,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                     margin: const EdgeInsets.symmetric(horizontal: 14),
                                     decoration: BoxDecoration(
-                                      color: match.homeGoals != null ? WorldCupColors.deepGreen.withOpacity(0.1) : WorldCupColors.background,
+                                      color: match.homeGoals != null ? WorldCupColors.deepGreen.withValues(alpha: 0.1) : WorldCupColors.background,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
@@ -351,7 +351,7 @@ class DetailScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: WorldCupColors.hotPink.withOpacity(0.1),
+                color: WorldCupColors.hotPink.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(

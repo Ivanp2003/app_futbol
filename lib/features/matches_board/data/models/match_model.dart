@@ -14,52 +14,53 @@ class MatchModel extends MatchEntity {
     required super.stage,
     super.group,
     required super.utcDateTime,
+    super.isLive = false,
+    super.minute,
   });
 
   factory MatchModel.fromJson(Map<String, dynamic> json) {
-    final fixture = json['fixture'] as Map<String, dynamic>;
-    final teams = json['teams'] as Map<String, dynamic>;
-    final goals = json['goals'] as Map<String, dynamic>;
-    final league = json['league'] as Map<String, dynamic>?;
-
-    final round = league?['round']?.toString();
-    final groupName = (round != null && round.contains('Group')) ? round : null;
+    final homeTeam = json['homeTeam'] as Map<String, dynamic>? ?? {};
+    final awayTeam = json['awayTeam'] as Map<String, dynamic>? ?? {};
+    final score = json['score']?['fullTime'] as Map<String, dynamic>? ?? {};
+    final competition = json['competition'] as Map<String, dynamic>? ?? {};
+    
+    final currentStatus = json['status'] as String? ?? 'NS';
+    final liveActive = currentStatus == 'LIVE' || currentStatus == 'IN_PLAY';
+    final minute = json['minute'] as int?;
 
     return MatchModel(
-      id: fixture['id'].toString(),
-      homeTeam: teams['home']['name'] as String? ?? '',
-      awayTeam: teams['away']['name'] as String? ?? '',
-      homeLogo: teams['home']['logo'] as String? ?? '',
-      awayLogo: teams['away']['logo'] as String? ?? '',
-      homeGoals: goals['home'] as int?,
-      awayGoals: goals['away'] as int?,
-      status: fixture['status']['short'] as String? ?? '',
-      stadium: fixture['venue']?['name'] as String? ?? 'Estadio por definir',
-      stage: league?['round'] as String? ?? 'Fase de Grupos',
-      group: groupName,
-      utcDateTime: DateTime.parse(fixture['date'] as String),
+      id: json['id'].toString(),
+      homeTeam: homeTeam['name'] as String? ?? 'Local',
+      awayTeam: awayTeam['name'] as String? ?? 'Visitante',
+      homeLogo: homeTeam['crest'] as String? ?? '',
+      awayLogo: awayTeam['crest'] as String? ?? '',
+      homeGoals: score['home'] as int?,
+      awayGoals: score['away'] as int?,
+      status: currentStatus,
+      stadium: json['venue'] as String? ?? 'Estadio por definir',
+      stage: competition['name'] as String? ?? 'Fase de Grupos',
+      group: json['group'] as String?,
+      utcDateTime: DateTime.parse(json['utcDate'] as String),
+      isLive: liveActive,
+      minute: minute,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'fixture': {
-        'id': id,
-        'status': {'short': status},
-        'venue': {'name': stadium},
-        'date': utcDateTime.toIso8601String(),
+      'id': id,
+      'status': status,
+      'venue': stadium,
+      'utcDate': utcDateTime.toIso8601String(),
+      'homeTeam': {'name': homeTeam, 'crest': homeLogo},
+      'awayTeam': {'name': awayTeam, 'crest': awayLogo},
+      'score': {
+        'fullTime': {'home': homeGoals, 'away': awayGoals}
       },
-      'teams': {
-        'home': {'name': homeTeam, 'logo': homeLogo},
-        'away': {'name': awayTeam, 'logo': awayLogo},
-      },
-      'goals': {
-        'home': homeGoals,
-        'away': awayGoals,
-      },
-      'league': {
-        'round': stage,
-      }
+      'competition': {'name': stage},
+      'group': group,
+      'isLive': isLive,
+      'minute': minute,
     };
   }
 }

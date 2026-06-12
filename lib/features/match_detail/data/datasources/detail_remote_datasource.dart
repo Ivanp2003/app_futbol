@@ -1,25 +1,20 @@
 import 'package:dio/dio.dart';
+import '../../../matches_board/data/models/match_model.dart';
 
-abstract class DetailRemoteDataSource {
-  Future<dynamic> getMatchDetail(String matchId);
-}
-
-class DetailRemoteDataSourceImpl implements DetailRemoteDataSource {
+class DetailRemoteDataSource {
   final Dio dio;
 
-  DetailRemoteDataSourceImpl({required this.dio});
+  DetailRemoteDataSource({required this.dio});
 
-  @override
-  Future<dynamic> getMatchDetail(String matchId) async {
+  Future<MatchModel?> getMatchDetail(String matchId) async {
     try {
       final response = await dio.get('/matches/$matchId');
       if (response.statusCode == 200) {
-        return response.data;
-      } else {
-        throw Exception('Error al cargar detalle del partido');
+        return MatchModel.fromJson(response.data as Map<String, dynamic>);
       }
+      return null;
     } catch (e) {
-      rethrow;
+      return null;
     }
   }
 }

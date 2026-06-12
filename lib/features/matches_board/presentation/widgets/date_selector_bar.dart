@@ -17,7 +17,7 @@ class DateSelectorBar extends StatelessWidget {
     final DateTime worldCupStart = DateTime(2026, 6, 11);
     final DateTime worldCupEnd = DateTime(2026, 7, 19);
 
-    // Generate dates around the selected date, bounded by World Cup start and end
+    // Generate dates around the selected date, bounded by World Cup range
     final List<DateTime> dates = [];
     for (int i = -3; i <= 3; i++) {
       final date = selectedDate.add(Duration(days: i));
@@ -28,8 +28,8 @@ class DateSelectorBar extends StatelessWidget {
     }
 
     return Container(
-      height: 80,
-      color: WorldCupColors.cardBackground,
+      height: 85,
+      color: WorldCupColors.bg,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: dates.length,
@@ -39,33 +39,36 @@ class DateSelectorBar extends StatelessWidget {
               date.month == selectedDate.month &&
               date.year == selectedDate.year;
 
-          final dayName = DateFormat('EEE', 'es').format(date).substring(0, 1).toUpperCase();
+          final dayName = DateFormat('EEE', 'es').format(date).toUpperCase();
           final dayNumber = date.day.toString();
 
           return GestureDetector(
             onTap: () => onDateSelected(date),
-            child: Container(
-              width: 55,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 58,
               margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? WorldCupColors.primaryBlue 
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected 
-                      ? Colors.transparent 
-                      : Colors.grey.shade300,
-                ),
+                    ? WorldCupColors.magenta 
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    dayName,
+                    dayName.substring(0, 3),
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isSelected ? Colors.white : WorldCupColors.textMuted,
+                      fontSize: 10,
+                      color: isSelected ? Colors.white : WorldCupColors.gray,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
@@ -73,8 +76,8 @@ class DateSelectorBar extends StatelessWidget {
                   Text(
                     dayNumber,
                     style: TextStyle(
-                      fontSize: 16,
-                      color: isSelected ? Colors.white : WorldCupColors.textDark,
+                      fontSize: 18,
+                      color: isSelected ? Colors.white : WorldCupColors.dark,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

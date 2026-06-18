@@ -37,7 +37,7 @@ class MatchesRemoteDataSource {
       throw Exception('Error de red: ${e.type} - ${e.message}');
     } catch (e) {
       debugPrint('Error parseando datos reales de la API: $e');
-      throw Exception('Error al procesar los datos del servidor de fútbol.');
+      throw Exception('Error al procesar los datos del servidor de fútbol: $e');
     }
   }
 }

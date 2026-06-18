@@ -1,15 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../matches_board/data/models/match_model.dart';
 import '../../../matches_board/domain/entities/match_entity.dart';
+import '../../data/datasources/detail_remote_datasource.dart';
+import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/world_cup_colors.dart';
+import '../../../../core/widgets/team_flag_widget.dart';
 
-class DetailScreen extends StatelessWidget {
-  final MatchEntity match;
+/// Pantalla de detalle de partido.
+///
+/// Recibe el [matchId] para consultar la API y una entidad [fallback]
+/// (ya cargada en el listado) que se usa como dato visual inmediato
+/// mientras el FutureBuilder espera la respuesta del endpoint /matches/{id}.
+class DetailScreen extends StatefulWidget {
+  final String matchId;
+  final MatchEntity fallback;
 
-  const DetailScreen({super.key, required this.match});
+  const DetailScreen({
+    super.key,
+    required this.matchId,
+    required this.fallback,
+  });
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  late Future<MatchModel?> _detailFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // Conecta el datasource que estaba "muerto" — Escenario 1 HU-03
+    final dataSource = DetailRemoteDataSource(dio: DioClient().dio);
+    _detailFuture = dataSource.getMatchDetail(widget.matchId);
+  }
 
   @override
   Widget build(BuildContext context) {
+    return FutureBuilder<MatchModel?>(
+      future: _detailFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // Mostramos el fallback inmediatamente mientras llega la respuesta
+          return _buildScreen(context, widget.fallback, isLoading: true);
+        }
+        // Si la API falla o devuelve null usamos el fallback sin romper la UI
+        final match = snapshot.data ?? widget.fallback;
+        return _buildScreen(context, match, isLoading: false);
+      },
+    );
+  }
+
+  Widget _buildScreen(BuildContext context, MatchEntity match, {required bool isLoading}) {
     final localTime = match.utcDateTime.toLocal();
     final formattedLocalTime = DateFormat('dd/MM/yyyy - HH:mm \'hs\'').format(localTime);
 
@@ -27,9 +71,25 @@ class DetailScreen extends StatelessWidget {
                 backgroundColor: WorldCupColors.blue,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                title: Text(
-                  match.stage,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        match.stage,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isLoading)
+                      const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                        ),
+                      ),
+                  ],
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: Container(
@@ -47,29 +107,11 @@ class DetailScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // Local Team Info
+                            // Equipo Local
                             Expanded(
                               child: Column(
                                 children: [
-                                  ClipOval(
-                                    child: match.homeLogo.isNotEmpty
-                                        ? Image.network(
-                                            match.homeLogo,
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(
-                                              Icons.flag_rounded,
-                                              size: 50,
-                                              color: Colors.white70,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons.flag_rounded,
-                                            size: 50,
-                                            color: Colors.white70,
-                                          ),
-                                  ),
+                                  TeamFlagWidget(teamName: match.homeTeam, size: 50),
                                   const SizedBox(height: 8),
                                   Text(
                                     match.homeTeam,
@@ -86,7 +128,7 @@ class DetailScreen extends StatelessWidget {
                               ),
                             ),
 
-                            // Score or Status
+                            // Marcador / VS
                             Column(
                               children: [
                                 Text(
@@ -105,7 +147,7 @@ class DetailScreen extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: WorldCupColors.magenta,
+                                      color: WorldCupColors.live,
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
@@ -131,29 +173,11 @@ class DetailScreen extends StatelessWidget {
                               ],
                             ),
 
-                            // Away Team Info
+                            // Equipo Visitante
                             Expanded(
                               child: Column(
                                 children: [
-                                  ClipOval(
-                                    child: match.awayLogo.isNotEmpty
-                                        ? Image.network(
-                                            match.awayLogo,
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) => const Icon(
-                                              Icons.flag_rounded,
-                                              size: 50,
-                                              color: Colors.white70,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons.flag_rounded,
-                                            size: 50,
-                                            color: Colors.white70,
-                                          ),
-                                  ),
+                                  TeamFlagWidget(teamName: match.awayTeam, size: 50),
                                   const SizedBox(height: 8),
                                   Text(
                                     match.awayTeam,
@@ -180,9 +204,9 @@ class DetailScreen extends StatelessWidget {
                 pinned: true,
                 delegate: _SliverAppBarDelegate(
                   TabBar(
-                    labelColor: WorldCupColors.magenta,
+                    labelColor: WorldCupColors.accent,
                     unselectedLabelColor: WorldCupColors.gray,
-                    indicatorColor: WorldCupColors.magenta,
+                    indicatorColor: WorldCupColors.accent,
                     indicatorSize: TabBarIndicatorSize.tab,
                     tabs: const [
                       Tab(text: 'Resumen'),
@@ -196,9 +220,9 @@ class DetailScreen extends StatelessWidget {
           },
           body: TabBarView(
             children: [
-              _buildResumenTab(formattedLocalTime),
-              _buildAlineacionesTab(),
-              _buildEstadisticasTab(),
+              _buildResumenTab(match, formattedLocalTime),
+              _buildAlineacionesTab(match),
+              _buildEstadisticasTab(match),
             ],
           ),
         ),
@@ -206,13 +230,12 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildResumenTab(String formattedLocalTime) {
+  Widget _buildResumenTab(MatchEntity match, String formattedLocalTime) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Info Card
           Card(
             color: Colors.white,
             elevation: 1,
@@ -221,15 +244,18 @@ class DetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  ListTile(
-                    leading: const CircleAvatar(
-                      backgroundColor: WorldCupColors.lightGray,
-                      child: Icon(Icons.stadium_rounded, color: WorldCupColors.green),
+                  // Estadio — se oculta si está vacío (Escenario 2 HU-03)
+                  if (match.stadium.isNotEmpty) ...[
+                    ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: WorldCupColors.lightGray,
+                        child: Icon(Icons.stadium_rounded, color: WorldCupColors.green),
+                      ),
+                      title: const Text('Estadio / Sede', style: TextStyle(fontSize: 12, color: WorldCupColors.gray)),
+                      subtitle: Text(match.stadium, style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.dark)),
                     ),
-                    title: const Text('Estadio / Sede', style: TextStyle(fontSize: 12, color: WorldCupColors.gray)),
-                    subtitle: Text(match.stadium, style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.dark)),
-                  ),
-                  const Divider(height: 1),
+                    const Divider(height: 1),
+                  ],
                   ListTile(
                     leading: const CircleAvatar(
                       backgroundColor: WorldCupColors.lightGray,
@@ -243,7 +269,7 @@ class DetailScreen extends StatelessWidget {
                     ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: WorldCupColors.lightGray,
-                        child: Icon(Icons.grid_view_rounded, color: WorldCupColors.magenta),
+                        child: Icon(Icons.grid_view_rounded, color: WorldCupColors.accent),
                       ),
                       title: const Text('Clasificación', style: TextStyle(fontSize: 12, color: WorldCupColors.gray)),
                       subtitle: Text(match.group!, style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.dark)),
@@ -255,7 +281,7 @@ class DetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Possession Section (Highlight UI requirement)
+          // Posesión (dato visual / mock — la API v4 gratuita no incluye stats)
           const Text(
             'Posesión del Balón',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: WorldCupColors.dark),
@@ -274,7 +300,7 @@ class DetailScreen extends StatelessWidget {
                     children: [
                       Text(
                         '${match.homeTeam} (58%)',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.magenta),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.accent),
                       ),
                       Text(
                         '(42%) ${match.awayTeam}',
@@ -283,21 +309,14 @@ class DetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Progress indicator combining Home (Magenta) and Away (Green)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: SizedBox(
                       height: 12,
                       child: Row(
                         children: [
-                          Expanded(
-                            flex: 58,
-                            child: Container(color: WorldCupColors.magenta),
-                          ),
-                          Expanded(
-                            flex: 42,
-                            child: Container(color: WorldCupColors.green),
-                          ),
+                          Expanded(flex: 58, child: Container(color: WorldCupColors.accent)),
+                          Expanded(flex: 42, child: Container(color: WorldCupColors.green)),
                         ],
                       ),
                     ),
@@ -311,7 +330,7 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAlineacionesTab() {
+  Widget _buildAlineacionesTab(MatchEntity match) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -330,9 +349,17 @@ class DetailScreen extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  _buildLineupRow(match.homeTeam, 'Entrenador A', ['P. López (GK)', 'M. Sedeño (DF)', 'J. Gómez (DF)', 'A. Rueda (DF)', 'F. Silva (DF)', 'C. Ortiz (MC)', 'D. Marín (MC)', 'J. Rangel (MC)', 'S. Castro (FW)', 'K. Benzema (FW)', 'E. Hazard (FW)']),
+                  _buildLineupRow(match.homeTeam, 'Entrenador A', [
+                    'P. López (GK)', 'M. Sedeño (DF)', 'J. Gómez (DF)', 'A. Rueda (DF)',
+                    'F. Silva (DF)', 'C. Ortiz (MC)', 'D. Marín (MC)', 'J. Rangel (MC)',
+                    'S. Castro (FW)', 'K. Benzema (FW)', 'E. Hazard (FW)',
+                  ]),
                   const Divider(height: 32),
-                  _buildLineupRow(match.awayTeam, 'Entrenador B', ['A. Becker (GK)', 'D. Alves (DF)', 'Marquinhos (DF)', 'T. Silva (DF)', 'Marcelo (DF)', 'Casemiro (MC)', 'Fred (MC)', 'Paquetá (MC)', 'Neymar Jr (FW)', 'Richarlison (FW)', 'Vinicius Jr (FW)']),
+                  _buildLineupRow(match.awayTeam, 'Entrenador B', [
+                    'A. Becker (GK)', 'D. Alves (DF)', 'Marquinhos (DF)', 'T. Silva (DF)',
+                    'Marcelo (DF)', 'Casemiro (MC)', 'Fred (MC)', 'Paquetá (MC)',
+                    'Neymar Jr (FW)', 'Richarlison (FW)', 'Vinicius Jr (FW)',
+                  ]),
                 ],
               ),
             ),
@@ -365,7 +392,7 @@ class DetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEstadisticasTab() {
+  Widget _buildEstadisticasTab(MatchEntity match) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -413,7 +440,7 @@ class DetailScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(homeValue, style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.magenta)),
+              Text(homeValue, style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.accent)),
               Text(label, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: WorldCupColors.dark)),
               Text(awayValue, style: const TextStyle(fontWeight: FontWeight.bold, color: WorldCupColors.green)),
             ],
@@ -427,7 +454,7 @@ class DetailScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     flex: (homePercent * 100).round(),
-                    child: Container(color: WorldCupColors.magenta.withValues(alpha: 0.8)),
+                    child: Container(color: WorldCupColors.accent.withValues(alpha: 0.8)),
                   ),
                   Expanded(
                     flex: ((1 - homePercent) * 100).round(),
@@ -462,7 +489,5 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
-    return false;
-  }
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) => false;
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/match_entity.dart';
 import '../../../match_detail/presentation/screens/detail_screen.dart';
 import '../../../../core/theme/world_cup_colors.dart';
+import '../../../../core/widgets/team_flag_widget.dart';
 
 class MatchCardWidget extends StatelessWidget {
   final MatchEntity match;
@@ -20,7 +21,12 @@ class MatchCardWidget extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => DetailScreen(match: match)),
+            MaterialPageRoute(
+              builder: (context) => DetailScreen(
+                matchId: match.id,
+                fallback: match,
+              ),
+            ),
           );
         },
         child: Padding(
@@ -34,20 +40,20 @@ class MatchCardWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: WorldCupColors.magenta.withValues(alpha: 0.1),
+                        color: WorldCupColors.live.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.circle, size: 8, color: WorldCupColors.magenta),
+                          const Icon(Icons.circle, size: 8, color: WorldCupColors.live),
                           const SizedBox(width: 6),
                           Text(
                             '● EN VIVO ${match.minute != null ? "${match.minute}'" : ""}',
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: WorldCupColors.magenta,
+                              color: WorldCupColors.live,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -77,23 +83,7 @@ class MatchCardWidget extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ClipOval(
-                          child: match.homeLogo.isNotEmpty
-                              ? Image.network(
-                                  match.homeLogo,
-                                  width: 32,
-                                  height: 32,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(
-                                    Icons.flag_rounded,
-                                    color: WorldCupColors.textMuted,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.flag_rounded,
-                                  color: WorldCupColors.textMuted,
-                                ),
-                        ),
+                        TeamFlagWidget(teamName: match.homeTeam, size: 32),
                       ],
                     ),
                   ),
@@ -123,23 +113,7 @@ class MatchCardWidget extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        ClipOval(
-                          child: match.awayLogo.isNotEmpty
-                              ? Image.network(
-                                  match.awayLogo,
-                                  width: 32,
-                                  height: 32,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(
-                                    Icons.flag_rounded,
-                                    color: WorldCupColors.textMuted,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.flag_rounded,
-                                  color: WorldCupColors.textMuted,
-                                ),
-                        ),
+                        TeamFlagWidget(teamName: match.awayTeam, size: 32),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(

@@ -61,7 +61,7 @@ class _FilterScreenState extends State<FilterScreen> {
                 return ChoiceChip(
                   label: Text(status),
                   selected: isSelected,
-                  selectedColor: WorldCupColors.magenta,
+                  selectedColor: WorldCupColors.accent,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : WorldCupColors.dark,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -94,7 +94,7 @@ class _FilterScreenState extends State<FilterScreen> {
                 return ChoiceChip(
                   label: Text(stage),
                   selected: isSelected,
-                  selectedColor: WorldCupColors.magenta,
+                  selectedColor: WorldCupColors.accent,
                   labelStyle: TextStyle(
                     color: isSelected ? Colors.white : WorldCupColors.dark,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -115,7 +115,7 @@ class _FilterScreenState extends State<FilterScreen> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: WorldCupColors.magenta,
+                  backgroundColor: WorldCupColors.accent,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),

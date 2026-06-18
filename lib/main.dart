@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'core/theme/app_theme.dart';
 import 'features/matches_board/presentation/screens/home_screen.dart';
 
 void main() async {
@@ -20,9 +21,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mundial 2026',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
+      theme: AppTheme.buildAppTheme(),
       home: const HomeScreen(),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/constants/world_cup_dates.dart';
 import '../../../../core/theme/world_cup_colors.dart';
 
 class DateSelectorBar extends StatelessWidget {
@@ -14,15 +15,12 @@ class DateSelectorBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DateTime worldCupStart = DateTime(2026, 6, 11);
-    final DateTime worldCupEnd = DateTime(2026, 7, 19);
-
-    // Generate dates around the selected date, bounded by World Cup range
+    // Días visibles acotados al rango oficial del Mundial
     final List<DateTime> dates = [];
     for (int i = -3; i <= 3; i++) {
       final date = selectedDate.add(Duration(days: i));
-      if (date.isAfter(worldCupStart.subtract(const Duration(days: 1))) &&
-          date.isBefore(worldCupEnd.add(const Duration(days: 1)))) {
+      if (date.isAfter(WorldCupDates.start.subtract(const Duration(days: 1))) &&
+          date.isBefore(WorldCupDates.end.add(const Duration(days: 1)))) {
         dates.add(date);
       }
     }
@@ -50,7 +48,7 @@ class DateSelectorBar extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected 
-                    ? WorldCupColors.magenta 
+                    ? WorldCupColors.accent 
                     : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [

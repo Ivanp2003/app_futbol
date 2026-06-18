@@ -7,14 +7,14 @@ class AppTheme {
       useMaterial3: true,
       fontFamily: 'Inter',
       colorScheme: ColorScheme.fromSeed(
-        seedColor: WorldCupColors.magenta,
-        primary: WorldCupColors.magenta,
-        secondary: WorldCupColors.blue,
+        seedColor: WorldCupColors.primary,
+        primary: WorldCupColors.primary,
+        secondary: WorldCupColors.accent,
         surface: WorldCupColors.bg,
       ),
       scaffoldBackgroundColor: WorldCupColors.bg,
       appBarTheme: const AppBarTheme(
-        backgroundColor: WorldCupColors.blue,
+        backgroundColor: WorldCupColors.primary,
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
@@ -22,7 +22,6 @@ class AppTheme {
     );
   }
 
-  // Mantener compatibilidad con los métodos lightTheme y darkTheme usados previamente
   static ThemeData get lightTheme => buildAppTheme();
   static ThemeData get darkTheme => buildAppTheme().copyWith(
         brightness: Brightness.dark,
